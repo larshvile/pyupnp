@@ -16,8 +16,12 @@ class ProtocolTest(unittest.TestCase):
     def test_advertisement_is_created(self): # TODO naming
         msg = parse_ssdp_message(self.some_message('NOTIFY * HTTP/1.1'))
         self.assertIsInstance(msg, Advertisement)
+
+    def test_other_messages_cannot_be_created(self):
+        with self.assertRaises(ParsingError):
+            parse_ssdp_message(self.some_message('UNKNOWN START-LINE'))
     
 
     def some_message(self, startline):
-        return "%s\r\nHeader1: a\r\n" % startline
+        return "%s\r\nHeader: value\r\n" % startline
 
