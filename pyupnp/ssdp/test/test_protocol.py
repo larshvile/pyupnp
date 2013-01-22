@@ -1,25 +1,28 @@
 import unittest
 
-# TODO figure out exactly how this stuff works..
 from pyupnp.ssdp.protocol import *
+
+MSEARCH = 'M-SEARCH * HTTP/1.1'
+_200OK = 'HTTP/1.1 200 OK'
+NOTIFY = 'NOTIFY * HTTP/1.1'
 
 class ProtocolTest(unittest.TestCase):
 
-    def test_search_request_is_created(self): # TODO naming..?
-        msg = parse_ssdp_message(self.some_message('M-SEARCH * HTTP/1.1'))
+    def test_MSEARCH_message_yields_search_request(self):
+        msg = read_ssdp_message(self.some_message(MSEARCH))
         self.assertIsInstance(msg, SearchRequest)
 
-    def test_search_response_is_created(self): # TODO naming
-        msg = parse_ssdp_message(self.some_message('HTTP/1.1 200 OK'))
+    def test_200OK_message_yields_search_reponse(self):
+        msg = read_ssdp_message(self.some_message(_200OK))
         self.assertIsInstance(msg, SearchResponse)
 
-    def test_advertisement_is_created(self): # TODO naming
-        msg = parse_ssdp_message(self.some_message('NOTIFY * HTTP/1.1'))
+    def test_NOTIFY_message_yields_advertisement(self):
+        msg = read_ssdp_message(self.some_message(NOTIFY))
         self.assertIsInstance(msg, Advertisement)
 
-    def test_other_messages_cannot_be_created(self):
+    def test_other_messages_cannot_be_read(self):
         with self.assertRaises(ParsingError):
-            parse_ssdp_message(self.some_message('UNKNOWN START-LINE'))
+            read_ssdp_message(self.some_message('something else'))
     
 
     def some_message(self, startline):
