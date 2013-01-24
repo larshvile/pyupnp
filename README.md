@@ -8,5 +8,6 @@ TODO
 - SSDP
  - protocol
  - transport
+  - TTL for multicast M-SEARCH should default to 2
  - ControlPoint / devices
 
