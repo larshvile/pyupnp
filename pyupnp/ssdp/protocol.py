@@ -11,17 +11,22 @@ list the modules and subpackages exported by the package.
 
 def read_ssdp_message(msg_string):
     """Parse an SSDP message provided as text."""
-    startline, *headers = msg_string.splitlines()
-    msgtype = MESSAGE_TYPES.get(startline)
+    start_line, *header_lines = msg_string.splitlines()
+    
+    msgtype = MESSAGE_TYPES.get(start_line)
     if msgtype is None:
-        raise ParsingError('Invalid SSDP start-line "%s"' % startline)
-    return msgtype(headers)
+        raise ParsingError('Invalid SSDP start-line "%s"' % start_line)
+  
+    header_kvs = [(k.upper(), v.strip()) for (k, s, v) in
+            [l.partition(':') for l in header_lines]]
+
+    return msgtype(dict(header_kvs))
 
 
+# TODO toString / repr stuff?
 class SSDPMessage: # TODO does this even make sense?
     # TODO common headers?, nope.. Though Advertisement & SearchResponse shares some
     pass
-    # TODO pack(recipient) : str ?
 
 
 class SearchRequest(SSDPMessage):
@@ -29,7 +34,12 @@ class SearchRequest(SSDPMessage):
     START_LINE = 'M-SEARCH * HTTP/1.1'
 
     def __init__(self, headers):
+        self.headers = headers # TODO need to do better than this =)
         pass
+
+    # TODO host/port should be set as late as possible, ideally during transfer..
+    # maybe this can be solved by having an abstract setHost() in SSDPMessage?
+    # the transport infrastructure could invoke this before serializing the msg
 
     # HOST: 239.255.255.250:1900 => based on host
     # MAN: "ssdp:discover" => constant
@@ -52,6 +62,8 @@ class Advertisement(SSDPMessage):
     
     def __init__(self, headers):
         pass
+
+    # TODO HOST .. same as SearchRequest, but this one is actually constant??
 
 
 MESSAGE_TYPES = { SearchRequest.START_LINE: SearchRequest,
