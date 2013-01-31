@@ -9,32 +9,32 @@ NOTIFY = 'NOTIFY * HTTP/1.1'
 class ProtocolTest(unittest.TestCase):
 
     def test_MSEARCH_message_yields_search_request(self):
-        msg = read_ssdp_message(msg_string(MSEARCH))
+        msg = parse_ssdp_message(msg_string(MSEARCH))
         self.assertIsInstance(msg, SearchRequest)
 
     def test_200OK_message_yields_search_reponse(self):
-        msg = read_ssdp_message(msg_string(_200OK))
+        msg = parse_ssdp_message(msg_string(_200OK))
         self.assertIsInstance(msg, SearchResponse)
 
     def test_NOTIFY_message_yields_advertisement(self):
-        msg = read_ssdp_message(msg_string(NOTIFY))
+        msg = parse_ssdp_message(msg_string(NOTIFY))
         self.assertIsInstance(msg, Advertisement)
 
     def test_other_messages_cannot_be_read(self):
         with self.assertRaises(ParsingError):
-            read_ssdp_message(msg_string('something else'))
+            parse_ssdp_message(msg_string('something else'))
 
     def test_headers_are_persisted_in_parsed_message(self):
-        msg = read_ssdp_message(msg_string(K1 = 'a', K2 = 'b'))
+        msg = parse_ssdp_message(msg_string(K1 = 'a', K2 = 'b'))
         self.assertEqual('a', msg.headers['K1'])
         self.assertEqual('b', msg.headers['K2'])
 
     def test_header_keys_are_stored_in_upper_case(self):
-        msg = read_ssdp_message(msg_string(key = 'v'))
+        msg = parse_ssdp_message(msg_string(key = 'v'))
         self.assertIn('KEY', msg.headers)
 
     def test_header_values_are_stripped_for_whitespace(self):
-        msg = read_ssdp_message(msg_string(key = ' v '))
+        msg = parse_ssdp_message(msg_string(key = ' v '))
         self.assertEqual('v', msg.headers['KEY'])
  
 

@@ -9,37 +9,65 @@ list the modules and subpackages exported by the package.
 """
 
 
-def read_ssdp_message(msg_string):
+def parse_ssdp_message(msg_string):
     """Parse an SSDP message provided as text."""
-    start_line, *header_lines = msg_string.splitlines()
+    startline, *header_lines = msg_string.splitlines()
     
-    msgtype = MESSAGE_TYPES.get(start_line)
+    msgtype = MESSAGE_TYPES.get(startline)
     if msgtype is None:
-        raise ParsingError('Invalid SSDP start-line "%s"' % start_line)
+        raise ParsingError('Invalid SSDP start-line "%s"' % startline)
   
-    header_kvs = [(k.upper(), v.strip()) for (k, s, v) in
+    headers = [(k.upper(), v.strip()) for (k, s, v) in
             [l.partition(':') for l in header_lines]]
 
-    return msgtype(dict(header_kvs))
+    return msgtype.from_headers(dict(headers))
 
 
-# TODO toString / repr stuff?
-class SSDPMessage: # TODO does this even make sense?
-    # TODO common headers?, nope.. Though Advertisement & SearchResponse shares some
-    pass
+class SSDPMessage(object):
+    """Base class for SSDP messages."""
+
+    @classmethod
+    def from_headers(cls, headers):
+        """Create a new message based on headers provided in a dict."""
+        msg = cls()
+        for (k, v) in headers.items():
+            prop = cls._propname(k)
+            if hasattr(msg, prop):
+                setattr(msg, prop, v)
+            else:
+                msg.headers[k] = v
+        return msg
+
+    @staticmethod
+    def _propname(header):
+        return header.lower().replace('-', '_')
+
+    def __init__(self):
+        self.headers = {}
+
+    def __repr__(self):
+        return self.__class__.__name__ + repr(self.headers)
 
 
 class SearchRequest(SSDPMessage):
     """An SSDP search request, issued to locate devices and services."""
     START_LINE = 'M-SEARCH * HTTP/1.1'
 
-    def __init__(self, headers):
-        self.headers = headers # TODO need to do better than this =)
-        pass
+    def __init__(self):
+        super(SearchRequest, self).__init__()
 
+    @property
+    def key(self):
+        return self.headers.get('KEY')
+
+    @key.setter
+    def key(self, value):
+        # TODO validate, parse_headers could convert to parsing err
+        self.headers['KEY'] = value
+    
     # TODO host/port should be set as late as possible, ideally during transfer..
-    # maybe this can be solved by having an abstract setHost() in SSDPMessage?
-    # the transport infrastructure could invoke this before serializing the msg
+        # - alternatively it could default to multicast, and be used as the actual
+        # address during transfer
 
     # HOST: 239.255.255.250:1900 => based on host
     # MAN: "ssdp:discover" => constant
@@ -52,18 +80,42 @@ class SearchResponse(SSDPMessage):
     """The response to an SSDP search request."""
     START_LINE = 'HTTP/1.1 200 OK'
 
-    def __init__(self, headers):
-        pass
+    def __init__(self):
+        super(SearchResponse, self).__init__()
+
+    # TODO
+    # HTTP/1.1 200 OK
+    # CACHE-CONTROL: max-age = seconds until advertisement expires
+    # DATE: when response was generated
+    # EXT:
+    # LOCATION: URL for UPnP description for root device
+    # SERVER: OS/version UPnP/1.1 product/version
+    # ST: search target
+    # USN: composite identifier for the advertisement
+    # BOOTID.UPNP.ORG: number increased each time device sends an initial announce or an update message
+    # CONFIGID.UPNP.ORG: number used for caching description information
+    # SEARCHPORT.UPNP.ORG: number identifies port on which device responds to unicast M-SEARCH
 
 
 class Advertisement(SSDPMessage):
     """An SSDP device/service advertisement message."""
     START_LINE = 'NOTIFY * HTTP/1.1'
     
-    def __init__(self, headers):
-        pass
+    def __init__(self):
+        super(Advertisement, self).__init__()
 
-    # TODO HOST .. same as SearchRequest, but this one is actually constant??
+    # TODO
+    # NOTIFY * HTTP/1.1
+    # HOST: 239.255.255.250:1900
+    # CACHE-CONTROL: max-age = seconds until advertisement expires
+    # LOCATION: URL for UPnP description for root device
+    # NT: notification type
+    # NTS: ssdp:alive
+    # SERVER: OS/version UPnP/1.1 product/version
+    # USN: composite identifier for the advertisement
+    # BOOTID.UPNP.ORG: number increased each time device sends an initial announce or an update message
+    # CONFIGID.UPNP.ORG: number used for caching description information
+    # SEARCHPORT.UPNP.ORG: number identifies port on which device responds to unicast M-SEARCH
 
 
 MESSAGE_TYPES = { SearchRequest.START_LINE: SearchRequest,
