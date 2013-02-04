@@ -1,3 +1,4 @@
+# TODO docme
 """
 # TODO, PEP 257 sez..
 The docstring for a module should generally list the classes, exceptions
@@ -11,7 +12,7 @@ list the modules and subpackages exported by the package.
 
 def parse_ssdp_message(msg_string):
     """Parse an SSDP message provided as text."""
-    startline, *header_lines = msg_string.splitlines()
+    startline, *header_lines = filter(None, msg_string.splitlines())
     
     msgtype = MESSAGE_TYPES.get(startline)
     if msgtype is None:
@@ -47,6 +48,8 @@ class SSDPMessage(object):
 
     def __repr__(self):
         return self.__class__.__name__ + repr(self.headers)
+
+    # TODO transform to msg string for transport
 
 
 class SearchRequest(SSDPMessage):

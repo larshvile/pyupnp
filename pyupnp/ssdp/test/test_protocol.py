@@ -36,6 +36,10 @@ class ProtocolTest(unittest.TestCase):
     def test_header_values_are_stripped_for_whitespace(self):
         msg = parse_ssdp_message(msg_string(key = ' v '))
         self.assertEqual('v', msg.headers['KEY'])
+
+    def test_parsed_message_does_not_contain_empty_header(self):
+        msg = parse_ssdp_message(msg_string())
+        self.assertNotIn('', msg.headers)
  
 
 def msg_string(startline = MSEARCH, **headers):
