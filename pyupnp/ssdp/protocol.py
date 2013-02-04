@@ -9,6 +9,8 @@ than the summary line in the object's docstring.) The docstring for a package
 list the modules and subpackages exported by the package.
 """
 
+from pprint import pformat
+
 
 def parse_ssdp_message(msg_string):
     """Parse an SSDP message provided as text."""
@@ -47,7 +49,8 @@ class SSDPMessage(object):
         self.headers = {}
 
     def __repr__(self):
-        return self.__class__.__name__ + repr(self.headers)
+        hdr_with_val = dict((k, v) for k, v in self.headers.items() if v)
+        return self.__class__.__name__ + ' ' + pformat(hdr_with_val)
 
     # TODO transform to msg string for transport
 
