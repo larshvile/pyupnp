@@ -40,9 +40,33 @@ class ProtocolTest(unittest.TestCase):
     def test_parsed_message_does_not_contain_empty_header(self):
         msg = parse_ssdp_message(msg_string())
         self.assertNotIn('', msg.headers)
- 
+
+    def test_header_key_in_encoded_message_is_in_uppercase(self):
+        msg = SearchRequest()
+        msg.headers['test'] = 'some'
+        self.assertIn('TEST:', msg.encode())
+
+    def test_header_value_in_encoded_message_is_stripped_for_whitespace(self):
+        msg = SearchRequest()
+        msg.headers['test'] = ' value '
+        self.assertIn(': value\r', msg.encode())
+
+    def test_headers_in_encoded_message_are_sorted_alphabetically(self):
+        msg = SearchRequest()
+        msg.headers['a'] = 'some'
+        msg.headers['z'] = 'other'
+        self.assertIn('A: some\r\nZ: other', msg.encode())
+
+    def test_encoded_message_is_identical_to_the_original(self):
+        orig = 'M-SEARCH * HTTP/1.1\r\n'\
+               'HOST: host:port\r\n'\
+               'MAN: "ssdp:discover\r\n'\
+               'MX: 1\r\n'\
+               'ST: ssdp:all\r\n'
+        self.assertEqual(orig, parse_ssdp_message(orig).encode())
+
 
 def msg_string(startline = MSEARCH, **headers):
-    hdstr = ['%s: %s' % (k, v) for k, v in headers.items()]
-    return "%s\r\n%s\r\n" % (startline, '\r\n'.join(hdstr))
+    hdrs = ['%s: %s' % (k, v) for k, v in headers.items()]
+    return "%s\r\n%s\r\n" % (startline, '\r\n'.join(hdrs))
 

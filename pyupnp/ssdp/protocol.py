@@ -49,10 +49,13 @@ class SSDPMessage(object):
         self.headers = {}
 
     def __repr__(self):
-        hdr_with_val = dict((k, v) for k, v in self.headers.items() if v)
-        return self.__class__.__name__ + ' ' + pformat(hdr_with_val)
+        return self.__class__.__name__ + ' ' + pformat(drop_empty_values(self.headers))
 
-    # TODO transform to msg string for transport
+    def encode(self):
+        """Encodes the message as a string ready for transport"""
+        hdrs = ['%s: %s' % (k.upper(), v.strip())
+            for k, v in items_sorted_by_key(self.headers)]
+        return "%s\r\n%s\r\n" % (self.__class__.START_LINE, '\r\n'.join(hdrs))
 
 
 class SearchRequest(SSDPMessage):
@@ -132,4 +135,11 @@ MESSAGE_TYPES = { SearchRequest.START_LINE: SearchRequest,
 class ParsingError(Exception):
     """Signals that an SSDP message could not be parsed."""
     pass
+
+
+def drop_empty_values(dict_):
+    return dict((k, v) for k, v in dict_.items() if v.strip())
+
+def items_sorted_by_key(dict_):
+    return sorted(((k, v) for k, v in dict_.items()))
 
