@@ -10,6 +10,7 @@ SSDP_MULTICAST_TTL = 4 # > 1 traverses subnets.. possibly =)
 
 # Strategy:
 # -----------------------
+#  echo "NOTIFY * HTTP/1.1" | socat - UDP-DATAGRAM:192.168.1.173:2048
 #
 # TODO create a model for dealing with the SSDP protocol, without dealing with transport..
 #
