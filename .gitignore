@@ -1,5 +1,11 @@
 *.pyc
 *.swp
-target
+
+# test stuff
 .coverage
+coverage.xml
+nosetests.xml
+
+# dist stuff
+pyupnp.egg-info
 
