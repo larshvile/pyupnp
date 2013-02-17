@@ -64,6 +64,11 @@ class TestProtocol:
                'ST: ssdp:all\r\n'
         assert parse_ssdp_message(orig).encode() == orig
 
+    def test_empty_headers_are_excluded_from_repr_output(self):
+        msg = parse_ssdp_message(msg_string(h1 = '1', h2 = ''))
+        assert 'H1' in repr(msg)
+        assert 'H2' not in repr(msg)
+
 
 def msg_string(startline = MSEARCH, **headers):
     hdrs = ['%s: %s' % (k, v) for k, v in headers.items()]
