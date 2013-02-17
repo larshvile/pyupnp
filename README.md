@@ -1,13 +1,12 @@
 pyupnp
 ======
 
-A simple UPnP library for python 3.
+A simple UPnP library for python 3.1+. Nose must be installed to run the
+tests.
 
 TODO
 ====
 - SSDP
- - protocol
  - transport
-  - TTL for multicast M-SEARCH should default to 2
  - ControlPoint / devices
 
