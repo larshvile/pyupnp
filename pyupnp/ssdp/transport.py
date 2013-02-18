@@ -30,14 +30,8 @@ if __name__ == '__main__':
 
     else:
         req = SearchRequest()
-        # TODO sane defaults please
         # TODO proper setters?
-        req.headers['host'] = '%s:%d' % (SSDP_MULTICAST_GROUP, SSDP_PORT)
-        req.headers['man'] = '"ssdp:discover"'
-        req.headers['mx'] = '1'
-        req.headers['st'] = 'ssdp:all'
-        #req.headers['st'] = 'upnp:rootdevice'
-        req.headers['user-agent'] = SSDP_USER_AGENT
+        req.headers['MX'] = '5'
         print('Sending %s' % req)
         print()
 

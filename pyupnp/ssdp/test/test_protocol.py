@@ -52,22 +52,32 @@ class TestProtocol:
 
     def test_headers_in_encoded_message_are_sorted_alphabetically(self):
         msg = SearchRequest()
-        msg.headers['a'] = 'some'
-        msg.headers['z'] = 'other'
-        assert 'A: some\r\nZ: other' in msg.encode()
+        msg.headers['x'] = 'some'
+        msg.headers['y'] = 'other'
+        assert 'X: some\r\nY: other' in msg.encode()
 
     def test_encoded_message_is_identical_to_the_original(self):
         orig = 'M-SEARCH * HTTP/1.1\r\n'\
                'HOST: host:port\r\n'\
-               'MAN: "ssdp:discover\r\n'\
+               'MAN: "ssdp:discover"\r\n'\
                'MX: 1\r\n'\
-               'ST: ssdp:all\r\n'
+               'ST: ssdp:all\r\n'\
+               'USER-AGENT: agentX\r\n'
         assert parse_ssdp_message(orig).encode() == orig
 
     def test_empty_headers_are_excluded_from_repr_output(self):
         msg = parse_ssdp_message(msg_string(h1 = '1', h2 = ''))
         assert 'H1' in repr(msg)
         assert 'H2' not in repr(msg)
+
+    def test_fresh_message_is_initialized_with_default_values(self):
+        msg = SearchRequest()
+        assert 'MX' in msg.headers
+
+    def test_default_values_are_not_present_in_parsed_messages(self):
+        msg = SearchRequest.from_headers({'a': 'b'})
+        assert 'MX' not in msg.headers
+        assert 'A' in msg.headers
 
 
 def msg_string(startline = MSEARCH, **headers):

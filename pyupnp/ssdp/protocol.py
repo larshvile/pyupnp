@@ -10,6 +10,11 @@ list the modules and subpackages exported by the package.
 """
 
 from pprint import pformat
+import platform
+
+SSDP_MULTICAST_ADDR = '239.255.255.250:1900'
+# TODO harcoded version string..
+SSDP_USER_AGENT = '%s/%s UPnP/1.1 pyupnp/0.1' % (platform.system(), platform.release())
 
 
 def parse_ssdp_message(msg_string):
@@ -33,6 +38,7 @@ class SSDPMessage(object):
     def from_headers(cls, headers):
         """Create a new message based on headers provided in a dict."""
         msg = cls()
+        msg.headers = {}
         for (k, v) in headers.items():
             prop = cls._propname(k)
             if hasattr(msg, prop):
@@ -46,7 +52,7 @@ class SSDPMessage(object):
         return header.lower().replace('-', '_')
 
     def __init__(self):
-        self.headers = {}
+        self.headers = dict(self._defaults())
 
     def __repr__(self):
         return (self.__class__.__name__ + ' '
@@ -74,16 +80,15 @@ class SearchRequest(SSDPMessage):
     def key(self, value):
         # TODO validate, parse_headers could convert to parsing err
         self.headers['KEY'] = value
-    
-    # TODO host/port should be set as late as possible, ideally during transfer..
-        # - alternatively it could default to multicast, and be used as the actual
-        # address during transfer
 
-    # HOST: 239.255.255.250:1900 => based on host
-    # MAN: "ssdp:discover" => constant
-    # MX: seconds to delay response => must be >=1, should be <=5
-    # ST: search target
-    # USER-AGENT: OS/version UPnP/1.1 product/version
+    def _defaults(self):
+        return {
+            'HOST': SSDP_MULTICAST_ADDR,
+            'MAN': '"ssdp:discover"',
+            'MX': '1',
+            'ST': 'ssdp:all',
+            'USER-AGENT': SSDP_USER_AGENT
+        }
 
 
 class SearchResponse(SSDPMessage):
@@ -92,6 +97,9 @@ class SearchResponse(SSDPMessage):
 
     def __init__(self):
         super(SearchResponse, self).__init__()
+
+    def _defaults(self):
+        return {} # TODO
 
     # TODO
     # HTTP/1.1 200 OK
@@ -113,6 +121,9 @@ class Advertisement(SSDPMessage):
     
     def __init__(self):
         super(Advertisement, self).__init__()
+
+    def _defaults(self):
+        return {} # TODO
 
     # TODO
     # NOTIFY * HTTP/1.1
