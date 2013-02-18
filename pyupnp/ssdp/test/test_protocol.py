@@ -75,7 +75,7 @@ class TestProtocol:
         assert 'MX' in msg.headers
 
     def test_default_values_are_not_present_in_parsed_messages(self):
-        msg = SearchRequest.from_headers({'a': 'b'})
+        msg = SearchRequest.from_headers({'A': 'b'})
         assert 'MX' not in msg.headers
         assert 'A' in msg.headers
 
