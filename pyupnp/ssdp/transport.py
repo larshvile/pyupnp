@@ -31,6 +31,8 @@ if __name__ == '__main__':
     else:
         req = SearchRequest()
         # TODO proper setters?
+            # req.mx = 5
+            # req.host = (addr, port) .. ditto for getter.. ??
         req.headers['MX'] = '5'
         print('Sending %s' % req)
         print()

@@ -25,35 +25,29 @@ class TestProtocol:
 
     def test_headers_are_persisted_in_parsed_message(self):
         msg = parse_ssdp_message(msg_string(K1 = 'a', K2 = 'b'))
-        assert msg.headers['K1'] == 'a'
-        assert msg.headers['K2'] == 'b'
+        assert msg._headers['K1'] == 'a'
+        assert msg._headers['K2'] == 'b'
 
     def test_header_keys_are_stored_in_upper_case(self):
         msg = parse_ssdp_message(msg_string(key = 'v'))
-        assert 'KEY' in msg.headers
+        assert 'KEY' in msg._headers
 
     def test_header_values_are_stripped_for_whitespace(self):
         msg = parse_ssdp_message(msg_string(key = ' v '))
-        assert msg.headers['KEY'] == 'v'
+        assert msg._headers['KEY'] == 'v'
 
     def test_parsed_message_does_not_contain_empty_header(self):
         msg = parse_ssdp_message(msg_string())
-        assert '' not in msg.headers
+        assert '' not in msg._headers
 
-    def test_header_key_in_encoded_message_is_in_uppercase(self):
-        msg = SearchRequest()
-        msg.headers['test'] = 'some'
-        assert 'TEST:' in msg.encode()
-
-    def test_header_value_in_encoded_message_is_stripped_for_whitespace(self):
-        msg = SearchRequest()
-        msg.headers['test'] = ' value '
-        assert ': value\r' in msg.encode()
+    def test_header_keys_are_converted_to_uppercase(self):
+        msg = some_message()
+        msg.set_headers(test = 'some')
+        assert 'TEST' in msg._headers
 
     def test_headers_in_encoded_message_are_sorted_alphabetically(self):
-        msg = SearchRequest()
-        msg.headers['x'] = 'some'
-        msg.headers['y'] = 'other'
+        msg = some_message()
+        msg.set_headers(x = 'some', y = 'other')
         assert 'X: some\r\nY: other' in msg.encode()
 
     def test_encoded_message_is_identical_to_the_original(self):
@@ -72,15 +66,18 @@ class TestProtocol:
 
     def test_fresh_message_is_initialized_with_default_values(self):
         msg = SearchRequest()
-        assert 'MX' in msg.headers
+        assert 'MX' in msg._headers
 
     def test_default_values_are_not_present_in_parsed_messages(self):
-        msg = SearchRequest.from_headers({'A': 'b'})
-        assert 'MX' not in msg.headers
-        assert 'A' in msg.headers
+        msg = SearchRequest.from_headers({'a': 'b'})
+        assert 'MX' not in msg._headers
+        assert 'A' in msg._headers
 
 
 def msg_string(startline = MSEARCH, **headers):
     hdrs = ['%s: %s' % (k, v) for k, v in headers.items()]
     return "%s\r\n%s\r\n" % (startline, '\r\n'.join(hdrs))
+
+def some_message():
+    return SearchRequest()
 

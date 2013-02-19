@@ -38,13 +38,15 @@ class SSDPMessage(object):
     def from_headers(cls, headers):
         """Create a new message based on headers provided in a dict."""
         msg = cls()
-        msg.headers = {}
+        msg._headers = {}
         for (k, v) in headers.items():
-            prop = cls._propname(k)
-            if hasattr(msg, prop):
-                setattr(msg, prop, v)
+            parser = 'parse_' + cls._propname(k)
+            # TODO parsers instead?
+                # TODO that would make these methods, not attrs.. fuck!
+            if hasattr(msg, parser):
+                setattr(msg, parser, v)
             else:
-                msg.headers[k] = v
+                msg.set_headers(**{k: v})
         return msg
 
     @staticmethod
@@ -52,16 +54,20 @@ class SSDPMessage(object):
         return header.lower().replace('-', '_')
 
     def __init__(self):
-        self.headers = dict(self._defaults())
+        self._headers = dict(self._defaults())
 
     def __repr__(self):
         return (self.__class__.__name__ + ' '
-                + pformat(drop_empty_values(self.headers)))
+                + pformat(drop_empty_values(self._headers)))
+
+    def set_headers(self, **headers):
+        """Stores a list of key/value pairs as headers. Keys are converted to ucase."""
+        for k, v in headers.items():
+            self._headers[k.upper()] = v
 
     def encode(self):
         """Encodes the message as a string ready for transport"""
-        hdrs = ['%s: %s' % (k.upper(), v.strip())
-            for k, v in items_sorted_by_key(self.headers)]
+        hdrs = ['%s: %s' % (k, v) for k, v in items_sorted_by_key(self._headers)]
         return "%s\r\n%s\r\n" % (self.__class__.START_LINE, '\r\n'.join(hdrs))
 
 
