@@ -40,7 +40,7 @@ class SSDPMessage(object):
         msg = cls()
         msg._headers = {}
         for (k, v) in headers.items():
-            parser = 'parse_' + cls._propname(k)
+            parser = 'parse_' + _propname(k)
             # TODO parsers instead?
                 # TODO that would make these methods, not attrs.. fuck!
             if hasattr(msg, parser):
@@ -49,16 +49,12 @@ class SSDPMessage(object):
                 msg.set_headers(**{k: v})
         return msg
 
-    @staticmethod
-    def _propname(header):
-        return header.lower().replace('-', '_')
-
     def __init__(self):
         self._headers = dict(self._defaults())
 
     def __repr__(self):
         return (self.__class__.__name__ + ' '
-                + pformat(drop_empty_values(self._headers)))
+                + pformat(_drop_empty_values(self._headers)))
 
     def set_headers(self, **headers):
         """Stores a list of key/value pairs as headers. Keys are converted to ucase."""
@@ -67,7 +63,7 @@ class SSDPMessage(object):
 
     def encode(self):
         """Encodes the message as a string ready for transport"""
-        hdrs = ['%s: %s' % (k, v) for k, v in items_sorted_by_key(self._headers)]
+        hdrs = ['%s: %s' % (k, v) for k, v in _items_sorted_by_key(self._headers)]
         return "%s\r\n%s\r\n" % (self.__class__.START_LINE, '\r\n'.join(hdrs))
 
 
@@ -155,9 +151,12 @@ class ParsingError(Exception):
     pass
 
 
-def drop_empty_values(dict_):
+def _propname(header):
+    return header.lower().replace('-', '_')
+
+def _drop_empty_values(dict_):
     return dict((k, v) for k, v in dict_.items() if v.strip())
 
-def items_sorted_by_key(dict_):
+def _items_sorted_by_key(dict_):
     return sorted(((k, v) for k, v in dict_.items()))
 
