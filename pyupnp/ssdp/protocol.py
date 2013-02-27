@@ -41,10 +41,11 @@ class SSDPMessage(object):
         msg._headers = {}
         for (k, v) in headers.items():
             parser = 'parse_' + _propname(k)
-            # TODO parsers instead?
-                # TODO that would make these methods, not attrs.. fuck!
             if hasattr(msg, parser):
-                setattr(msg, parser, v)
+                try:
+                    getattr(msg, parser)(v)
+                except Exception as e:
+                    raise ParsingError('Unable to parse %s=%s - %s' % (k, v, e))
             else:
                 msg.set_headers(**{k: v})
         return msg
@@ -57,9 +58,13 @@ class SSDPMessage(object):
                 + pformat(_drop_empty_values(self._headers)))
 
     def set_headers(self, **headers):
-        """Stores a list of key/value pairs as headers. Keys are converted to ucase."""
+        """Stores key/value pairs as headers."""
         for k, v in headers.items():
             self._headers[k.upper()] = v
+
+    def get_header(self, k):
+        """Returns the value of a header, or None"""
+        return self._headers.get(k.upper())
 
     def encode(self):
         """Encodes the message as a string ready for transport"""
@@ -75,13 +80,39 @@ class SearchRequest(SSDPMessage):
         super(SearchRequest, self).__init__()
 
     @property
-    def key(self):
-        return self.headers.get('KEY')
+    def host(self):
+        # TODO docme
+        val = self.get_header('host')
+        if val == None:
+            return None
+        addr, port = val.split(':')
+        return (addr, int(port))
+        # TODO seems to be some duplicaton going on here.. parse + property = overkill?
 
-    @key.setter
-    def key(self, value):
-        # TODO validate, parse_headers could convert to parsing err
-        self.headers['KEY'] = value
+    @host.setter
+    def host(self, value):
+        addr, port = value
+        self.set_headers(host = addr + ':' + port)
+
+    def parse_host(self, value):
+        self.host = value.split(':')
+
+    @property
+    def mx(self):
+        """The number of seconds that the control point will wait for replies."""
+        val = self.get_header('mx')
+        return None if val == None else int(val)
+
+    @mx.setter
+    def mx(self, value):
+        if int(value) <= 0:
+            raise IllegalValueError('MX (%s) must be > 0' % value)
+        self.set_headers(mx = str(value))
+
+    def parse_mx(self, value):
+        self.mx = value
+
+    # TODO search target property
 
     def _defaults(self):
         return {
@@ -147,7 +178,11 @@ MESSAGE_TYPES = { SearchRequest.START_LINE: SearchRequest,
 
 
 class ParsingError(Exception):
-    """Signals that an SSDP message could not be parsed."""
+    """An SSDP message could not be parsed."""
+    pass
+
+class IllegalValueError(Exception):
+    """Protocol-disobedience thwarted."""
     pass
 
 

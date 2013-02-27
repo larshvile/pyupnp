@@ -25,25 +25,28 @@ class TestProtocol:
 
     def test_headers_are_persisted_in_parsed_message(self):
         msg = parse_ssdp_message(msg_string(K1 = 'a', K2 = 'b'))
-        assert msg._headers['K1'] == 'a'
-        assert msg._headers['K2'] == 'b'
+        assert msg.get_header('k1') == 'a'
+        assert msg.get_header('k2') == 'b'
+
+    def test_header_access_is_case_insensitive(self):
+        msg = parse_ssdp_message(msg_string(key = 'v'))
+        msg.set_headers(OTHER = 'w')
+        assert msg.get_header('KEY') == 'v'
+        assert msg.get_header('OTher') == 'w'
 
     def test_header_keys_are_stored_in_upper_case(self):
         msg = parse_ssdp_message(msg_string(key = 'v'))
+        msg.set_headers(other = 'w')
         assert 'KEY' in msg._headers
+        assert 'OTHER' in msg._headers
 
     def test_header_values_are_stripped_for_whitespace(self):
         msg = parse_ssdp_message(msg_string(key = ' v '))
-        assert msg._headers['KEY'] == 'v'
+        assert msg.get_header('key') == 'v'
 
     def test_parsed_message_does_not_contain_empty_header(self):
         msg = parse_ssdp_message(msg_string())
         assert '' not in msg._headers
-
-    def test_header_keys_are_converted_to_uppercase(self):
-        msg = some_message()
-        msg.set_headers(test = 'some')
-        assert 'TEST' in msg._headers
 
     def test_headers_in_encoded_message_are_sorted_alphabetically(self):
         msg = some_message()
@@ -72,6 +75,28 @@ class TestProtocol:
         msg = SearchRequest.from_headers({'a': 'b'})
         assert 'MX' not in msg._headers
         assert 'A' in msg._headers
+
+    @raises(ParsingError)
+    def test_exceptions_during_parsing_results_in_parsing_error(self):
+        parse_ssdp_message(msg_string(mx = 'abc'))
+
+    def test_MX_property_in_search_request_behaves_properly(self):
+        msg = parse_ssdp_message(msg_string(startline = MSEARCH, mx = '1'))
+        assert msg.mx == 1
+
+        msg.set_headers(mx = '2')
+        assert msg.mx == 2
+
+        msg.mx = 3
+        assert msg.mx == 3
+        assert msg.get_header('mx') == '3'
+
+        msg._headers = {}
+        assert msg.mx == None
+
+    @raises(IllegalValueError)
+    def test_MX_must_be_positive(self):
+        SearchRequest().mx = -1
 
 
 def msg_string(startline = MSEARCH, **headers):

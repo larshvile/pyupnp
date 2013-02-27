@@ -6,6 +6,7 @@ blah blah
 from socket import * # TODO fixo
 import platform
 import struct
+import time
 
 from pyupnp.ssdp.protocol import *
 
@@ -33,16 +34,17 @@ if __name__ == '__main__':
         # TODO proper setters?
             # req.mx = 5
             # req.host = (addr, port) .. ditto for getter.. ??
-        req.headers['MX'] = '5'
-        print('Sending %s' % req)
+        req.mx = 2
+        print('Sending %s to %s' % (req, req.host))
         print()
+        time.sleep(2)
 
         # init the socket for multicast sending
         s = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)
         s.setsockopt(IPPROTO_IP, IP_MULTICAST_TTL, SSDP_MULTICAST_TTL)
 
         # send the request
-        s.sendto(req.encode().encode('utf-8'), (SSDP_MULTICAST_GROUP, SSDP_PORT))
+        s.sendto(req.encode().encode('utf-8'), req.host)
 
     # Await replies
     while True:
