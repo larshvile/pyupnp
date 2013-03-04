@@ -69,18 +69,18 @@ class TestProtocol:
 
     def test_fresh_message_is_initialized_with_default_values(self):
         msg = SearchRequest()
-        assert 'MX' in msg._headers
+        assert msg.mx != None
 
     def test_default_values_are_not_present_in_parsed_messages(self):
         msg = SearchRequest.from_headers({'a': 'b'})
-        assert 'MX' not in msg._headers
-        assert 'A' in msg._headers
+        assert msg.mx == None
+        assert msg.get_header('a') == 'b'
 
     @raises(ParsingError)
     def test_exceptions_during_parsing_results_in_parsing_error(self):
         parse_ssdp_message(msg_string(mx = 'abc'))
 
-    def test_MX_property_in_search_request_behaves_properly(self):
+    def test_mx_property_in_search_request_behaves_properly(self):
         msg = parse_ssdp_message(msg_string(startline = MSEARCH, mx = '1'))
         assert msg.mx == 1
 
@@ -95,8 +95,26 @@ class TestProtocol:
         assert msg.mx == None
 
     @raises(IllegalValueError)
-    def test_MX_must_be_positive(self):
+    def test_mx_must_be_positive(self):
         SearchRequest().mx = -1
+
+    def test_host_in_search_request_defaults_to_ssdp_multicast_addr(self):
+        assert ('239.255.255.250', 1900) == SearchRequest().host
+
+    def test_host_property_in_search_request_behaves_properly(self):
+        msg = parse_ssdp_message(msg_string(startline = MSEARCH,
+            host = 'addr:123'))
+        assert msg.host == ('addr', 123)
+
+        msg.set_headers(host = 'a:1')
+        assert msg.host == ('a', 1)
+
+        msg.host = ('b', 2)
+        assert msg.host == ('b', 2)
+        assert msg.get_header('host') == 'b:2'
+
+        msg._headers = {}
+        assert msg.host == None
 
 
 def msg_string(startline = MSEARCH, **headers):

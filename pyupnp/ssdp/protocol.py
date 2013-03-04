@@ -1,14 +1,3 @@
-# TODO docme
-"""
-# TODO, PEP 257 sez..
-The docstring for a module should generally list the classes, exceptions
-and functions (and any other objects) that are exported by the module,
-with a one-line summary of each. (These summaries generally give less detail
-than the summary line in the object's docstring.) The docstring for a package
-(i.e., the docstring of the package's __init__.py module) should also
-list the modules and subpackages exported by the package.
-"""
-
 from pprint import pformat
 import platform
 
@@ -40,7 +29,7 @@ class SSDPMessage(object):
         msg = cls()
         msg._headers = {}
         for (k, v) in headers.items():
-            parser = 'parse_' + _propname(k)
+            parser = '_parse_' + _propname(k)
             if hasattr(msg, parser):
                 try:
                     getattr(msg, parser)(v)
@@ -81,20 +70,19 @@ class SearchRequest(SSDPMessage):
 
     @property
     def host(self):
-        # TODO docme
+        """The destination (addr, port) of the request."""
         val = self.get_header('host')
         if val == None:
             return None
         addr, port = val.split(':')
         return (addr, int(port))
-        # TODO seems to be some duplicaton going on here.. parse + property = overkill?
 
     @host.setter
     def host(self, value):
         addr, port = value
-        self.set_headers(host = addr + ':' + port)
+        self.set_headers(host = addr + ':' + str(port))
 
-    def parse_host(self, value):
+    def _parse_host(self, value):
         self.host = value.split(':')
 
     @property
@@ -109,10 +97,8 @@ class SearchRequest(SSDPMessage):
             raise IllegalValueError('MX (%s) must be > 0' % value)
         self.set_headers(mx = str(value))
 
-    def parse_mx(self, value):
+    def _parse_mx(self, value):
         self.mx = value
-
-    # TODO search target property
 
     def _defaults(self):
         return {
