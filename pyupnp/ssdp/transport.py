@@ -34,7 +34,6 @@ if __name__ == '__main__':
         # TODO proper setters?
             # req.mx = 5
             # req.host = (addr, port) .. ditto for getter.. ??
-        req.mx = 2
         print('Sending %s to %s' % (req, req.host))
         print()
         time.sleep(2)

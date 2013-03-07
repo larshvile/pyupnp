@@ -1,9 +1,11 @@
+from time import gmtime, strftime
 from pprint import pformat
 import platform
 
 SSDP_MULTICAST_ADDR = '239.255.255.250:1900'
 # TODO harcoded version string..
 SSDP_USER_AGENT = '%s/%s UPnP/1.1 pyupnp/0.1' % (platform.system(), platform.release())
+SSDP_SERVER = SSDP_USER_AGENT
 
 
 def parse_ssdp_message(msg_string):
@@ -40,6 +42,7 @@ class SSDPMessage(object):
         return msg
 
     def __init__(self):
+        # set the defaults the same way as during parsing??
         self._headers = dict(self._defaults())
 
     def __repr__(self):
@@ -117,21 +120,24 @@ class SearchResponse(SSDPMessage):
     def __init__(self):
         super(SearchResponse, self).__init__()
 
-    def _defaults(self):
-        return {} # TODO
-
-    # TODO
-    # HTTP/1.1 200 OK
-    # CACHE-CONTROL: max-age = seconds until advertisement expires
-    # DATE: when response was generated
-    # EXT:
     # LOCATION: URL for UPnP description for root device
-    # SERVER: OS/version UPnP/1.1 product/version
+        # TODO required, set by client
     # ST: search target
+        # TODO required, based on request
     # USN: composite identifier for the advertisement
+        # TODO required, set by client
     # BOOTID.UPNP.ORG: number increased each time device sends an initial announce or an update message
-    # CONFIGID.UPNP.ORG: number used for caching description information
+        # TODO required set by client
     # SEARCHPORT.UPNP.ORG: number identifies port on which device responds to unicast M-SEARCH
+        # TODO set by client in case of non-standard listen port (always?)
+
+    def _defaults(self):
+        return {
+            'CACHE-CONTROL': 'max-age=60', # TODO should match the frequency of adverts
+            'EXT': '',
+            'DATE': strftime("%a, %d %b %Y %H:%M:%S GMT", gmtime()),
+            'SERVER': SSDP_SERVER
+        }
 
 
 class Advertisement(SSDPMessage):
@@ -144,9 +150,10 @@ class Advertisement(SSDPMessage):
     def _defaults(self):
         return {} # TODO
 
-    # TODO
+    # TODO .. most of these are shared with SearchResponse
     # NOTIFY * HTTP/1.1
     # HOST: 239.255.255.250:1900
+        # TODO reuse the stuff from SearchRequest
     # CACHE-CONTROL: max-age = seconds until advertisement expires
     # LOCATION: URL for UPnP description for root device
     # NT: notification type
