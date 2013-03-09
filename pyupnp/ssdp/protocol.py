@@ -2,7 +2,7 @@ from time import gmtime, strftime
 from pprint import pformat
 import platform
 
-SSDP_MULTICAST_ADDR = '239.255.255.250:1900'
+SSDP_MULTICAST_ADDR = ('239.255.255.250', 1900)
 # TODO harcoded version string..
 SSDP_USER_AGENT = '%s/%s UPnP/1.1 pyupnp/0.1' % (platform.system(), platform.release())
 SSDP_SERVER = SSDP_USER_AGENT
@@ -105,7 +105,7 @@ class SearchRequest(SSDPMessage):
 
     def _defaults(self):
         return {
-            'HOST': SSDP_MULTICAST_ADDR,
+            'HOST': SSDP_MULTICAST_ADDR[0] + ':' + str(SSDP_MULTICAST_ADDR[1]),
             'MAN': '"ssdp:discover"',
             'MX': '1',
             'ST': 'ssdp:all',

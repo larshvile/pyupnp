@@ -11,8 +11,6 @@ import time
 from pyupnp.ssdp.protocol import *
 
 
-SSDP_MULTICAST_GROUP = '239.255.255.250'
-SSDP_PORT = 1900
 SSDP_MULTICAST_TTL = 2 # > 1 traverses subnets.. possibly =)
 SSDP_USER_AGENT = "%s/%s UPnP/1.1 pyupnp/0.1" % (platform.system(), platform.release())
 
@@ -25,9 +23,9 @@ if __name__ == '__main__':
         # init the socket for multicast listening
         s = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)
         s.setsockopt(SOL_SOCKET, SO_REUSEADDR, 1)
-        s.bind(('', SSDP_PORT)) # TODO CANNOT BIND TO ANY INTERFACE.. IS THAT REALLY CORRECT??
+        s.bind(('', SSDP_MULTICAST_ADDR[1])) # TODO CANNOT BIND TO ANY INTERFACE.. IS THAT REALLY CORRECT??
         s.setsockopt(IPPROTO_IP, IP_ADD_MEMBERSHIP,
-                struct.pack("=4sl", inet_aton(SSDP_MULTICAST_GROUP), INADDR_ANY))
+                struct.pack("=4sl", inet_aton(SSDP_MULTICAST_ADDR[0]), INADDR_ANY))
 
     else:
         req = SearchRequest()
