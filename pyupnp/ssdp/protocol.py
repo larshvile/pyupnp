@@ -11,11 +11,11 @@ SSDP_SERVER = SSDP_USER_AGENT
 def parse_ssdp_message(msg_string):
     """Parse an SSDP message provided as text."""
     startline, *header_lines = filter(None, msg_string.splitlines())
-    
+
     msgtype = MESSAGE_TYPES.get(startline)
     if msgtype is None:
         raise ParsingError('Invalid SSDP start-line "%s"' % startline)
-  
+
     headers = [(k.upper(), v.strip()) for (k, s, v) in
             [l.partition(':') for l in header_lines]]
 
@@ -143,7 +143,7 @@ class SearchResponse(SSDPMessage):
 class Advertisement(SSDPMessage):
     """An SSDP device/service advertisement message."""
     START_LINE = 'NOTIFY * HTTP/1.1'
-    
+
     def __init__(self):
         super(Advertisement, self).__init__()
 
