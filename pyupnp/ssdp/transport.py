@@ -11,36 +11,43 @@ import time
 from pyupnp.ssdp.protocol import *
 
 
-SSDP_MULTICAST_TTL = 2 # > 1 traverses subnets.. possibly =)
-SSDP_USER_AGENT = "%s/%s UPnP/1.1 pyupnp/0.1" % (platform.system(), platform.release())
+SSDP_MULTICAST_TTL = 2
+
+
+def create_ssdp_broadcast_server_socket():
+    """Returns a socket configured to receive broadcasted SSDP messages."""
+    s = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)
+    return configure_ssdp_broadcast_server_socket(s)
+
+def configure_ssdp_broadcast_server_socket(socket):
+    """Configures an existing socket for receiving broadcasted SSDP messages."""
+    socket.setsockopt(SOL_SOCKET, SO_REUSEADDR, 1)
+    socket.bind(('', SSDP_MULTICAST_ADDR[1]))
+    socket.setsockopt(IPPROTO_IP, IP_ADD_MEMBERSHIP,
+        struct.pack("=4sl", inet_aton(SSDP_MULTICAST_ADDR[0]), INADDR_ANY))
+    return socket
+
+def create_ssdp_broadcast_client_socket():
+    """Returns a socket configured to broadcast SSDP messages."""
+    s = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)
+    s.setsockopt(IPPROTO_IP, IP_MULTICAST_TTL, SSDP_MULTICAST_TTL)
+    return s
 
 
 if __name__ == '__main__':
     search = True
 
     if not search:
-
-        # init the socket for multicast listening
-        s = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)
-        s.setsockopt(SOL_SOCKET, SO_REUSEADDR, 1)
-        s.bind(('', SSDP_MULTICAST_ADDR[1])) # TODO CANNOT BIND TO ANY INTERFACE.. IS THAT REALLY CORRECT??
-        s.setsockopt(IPPROTO_IP, IP_ADD_MEMBERSHIP,
-                struct.pack("=4sl", inet_aton(SSDP_MULTICAST_ADDR[0]), INADDR_ANY))
+        s = create_ssdp_broadcast_server_socket()
 
     else:
         req = SearchRequest()
-        # TODO proper setters?
-            # req.mx = 5
-            # req.host = (addr, port) .. ditto for getter.. ??
+        req.mx = 10
         print('Sending %s to %s' % (req, req.host))
         print()
         time.sleep(2)
 
-        # init the socket for multicast sending
-        s = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)
-        s.setsockopt(IPPROTO_IP, IP_MULTICAST_TTL, SSDP_MULTICAST_TTL)
-
-        # send the request
+        s = create_ssdp_broadcast_client_socket()
         s.sendto(req.encode().encode('utf-8'), req.host)
 
     # Await replies
